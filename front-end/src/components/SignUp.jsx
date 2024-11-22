@@ -1,49 +1,55 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { EyeIcon, EyeOff, Mail, Lock, CheckCircle, XCircle } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, CheckCircle, XCircle } from "lucide-react";
 import Cookies from "js-cookie";
 import "./app.css";
+
 const SignUp = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
-  const [message, setErrorMessage] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
+
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isPasswordValid = (password.includes("@") || password.includes("#")) && password.length >= 8 && password.includes(UpperCase());
+  const isPasswordValid = 
+    (password.includes("@") || password.includes("#")) &&
+    password.length >= 8 &&
+    /[A-Z]/.test(password);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     if (!isEmailValid || !isPasswordValid) {
-      setErrorMessage("Invalid password or Email");
+      setMessage("Invalid password or email");
       return;
     }
-    const UserData = { email, password };
+
+    const userData = { email, password };
 
     try {
-      const response = await fetch("http://localhost:5000/signup", {
+      const response = await fetch("http://localhost:5000/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(UserData),
+        body: JSON.stringify(userData),
+        credentials:include
       });
       const data = await response.json();
-      Cookies.set("token", data.token, { expires: 100000, path: "" });
-      Cookies.set("userId",data.userId,{expires:100000,path:""});
-      console.log(Cookies.get("token"));
-      console.log(Cookies.get("userId"));
       if (response.ok) {
+        Cookies.set("token", data.token, { expires: 7, path: "" });
+        Cookies.set("userId", data.userId, { expires: 7, path: "" });
         alert("Signed Up Successfully");
         navigate("/");
       } else {
-        setErrorMessage(data.message || "Something went wrong");
+        setMessage(data.message || "Something went wrong");
       }
     } catch (error) {
-      setErrorMessage("Error Signing Up");
+      setMessage("Error Signing Up");
       console.log(error);
     }
   };
+
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-black to-purple-900 overflow-hidden">
       <div className="absolute w-16 h-16 bg-blue-500 rounded-full opacity-20 animate-bubble top-10 left-1/4"></div>
@@ -94,7 +100,7 @@ const SignUp = () => {
                   onClick={() => setPasswordVisible(!passwordVisible)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                 >
-                  {passwordVisible ? <EyeOff size={20} /> : <EyeIcon size={20} />}
+                  {passwordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
                 {passwordTouched && isPasswordValid && (
                   <CheckCircle
@@ -134,4 +140,5 @@ const SignUp = () => {
     </div>
   );
 };
+
 export default SignUp;

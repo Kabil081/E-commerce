@@ -1,0 +1,9 @@
+com\example\ecommerce\CartRepository.class
+com\example\ecommerce\EcommerceApplication.class
+com\example\ecommerce\Cart.class
+com\example\ecommerce\UserRepository.class
+com\example\ecommerce\Product.class
+com\example\ecommerce\CartItem.class
+com\example\ecommerce\ApiController.class
+com\example\ecommerce\ProductRepository.class
+com\example\ecommerce\User.class

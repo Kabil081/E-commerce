@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { EyeIcon, EyeOff, Mail, Lock, CheckCircle, XCircle } from "lucide-react";
 import Cookies from "js-cookie";
-
 const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
@@ -11,7 +10,6 @@ const Login = () => {
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [message, setErrorMessage] = useState("");
   const navigate = useNavigate();
-
   const isEmailValid = email.includes("@") && email.length > 5;
   const isPasswordValid = password.length >= 6;
 
@@ -22,6 +20,7 @@ const Login = () => {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials:include
       });
       const data = await response.json();
       Cookies.set("token", data.token, { expires: 100000, path: "" });
