@@ -12,7 +12,6 @@ const Login = () => {
   const navigate = useNavigate();
   const isEmailValid = email.includes("@") && email.length > 5;
   const isPasswordValid = password.length >= 6;
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -20,13 +19,11 @@ const Login = () => {
         method: "POST",
         headers: { "Content-type": "application/json" },
         body: JSON.stringify({ email, password }),
-        credentials:include
       });
       const data = await response.json();
       Cookies.set("token", data.token, { expires: 100000, path: "" });
       Cookies.set("userId",data.userId,{expires:100000,path:""});
-      console.log(Cookies.get("token"));
-      console.log(Cookies.get("userId"));
+      console.log(data.token);
       if (response.ok) {
         alert("Logged In successfully");
         navigate("/");
@@ -38,7 +35,6 @@ const Login = () => {
       setErrorMessage("Error logging in");
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-purple-900 overflow-hidden relative">
       <div className="absolute inset-0 overflow-hidden">

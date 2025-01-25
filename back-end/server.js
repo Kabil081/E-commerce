@@ -1,18 +1,19 @@
-const express=require('express');
-const cors=require('cors');
-
-const dotenv=require('dotenv');
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
-const mongoose=require('mongoose');
+const mongoose = require('mongoose');
+const bodyparser = require('body-parser');
+const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
+const Cart = require('./CartSchema');
+const User = require('./UserSchema');
+const Product = require('./ProductSchema');
+const app = express();
 
-const bodyparser=require('body-parser');
-const bcrypt=require('bcrypt');
-const cookieParser=require('cookie-parser');
+dotenv.config();
+console.log(`JWT_SECRET: ${process.env.JWT_SECRET}`);
 
-const Cart=require('./CartSchema');
-const User=require('./UserSchema');
-const Product=require('./ProductSchema');
-const app=express()
 app.use(
     cors({
       origin: "http://localhost:5173", 
@@ -21,138 +22,142 @@ app.use(
       credentials: true,
     })
 );
-dotenv.config();
-const mongodb_uri=process.env.MONGODB_URI;
-mongoose.connect(mongodb_uri,{
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-}).then(()=>{
+
+const mongodb_uri = process.env.MONGODB_URI;
+mongoose.connect(mongodb_uri).then(() => {
     console.log('Connected to MongoDB');
-}).catch((err)=>{
+}).catch((err) => {
     console.error('Error connecting to MongoDB:', err);
 });
-app.use(bodyparser.json())
-app.use(cookieParser())
-const authenticate=(req,res,next)=>{
-    const token=req.cookies.token || req.headers.authorization?.split(' ')[1];
+
+app.use(bodyparser.json());
+app.use(cookieParser());
+
+const authenticate = (req, res, next) => {
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ message: 'Authentication required' });
     }
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; 
+        req.user = decoded;
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
+
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     const existingUser = await User.findOne({ email });
     if (!existingUser) {
-      return res.status(400).json({ message: 'User Doesn’t Exist' });
+        return res.status(400).json({ message: 'User Doesn’t Exist' });
     }
-    const token = jwt.sign(
-      { userId: existingUser._id, email: existingUser.email },
-      process.env.JWT_KEY,
-      { expiresIn: '1h' }
-    );
     const isMatch = await bcrypt.compare(password, existingUser.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid Password!' });
+        return res.status(400).json({ message: 'Invalid Password!' });
     }
+    
+    if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ message: 'JWT_SECRET is not defined' });
+    }
+
+    const token = jwt.sign(
+        { userId: existingUser._id, email: existingUser.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '10h' }
+    );
+    const oneMonthInMs = 30 * 24 * 60 * 60 * 1000;
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: true,
-      maxAge: 60*60*1000,
+        httpOnly: true,
+        sameSite: 'Strict',
+        maxAge: oneMonthInMs,
     });
     res.cookie('userId', existingUser._id.toString(), {
-      httpOnly: false,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: false,
+        maxAge: oneMonthInMs,
     });
     return res.status(200).json({ message: 'Login Successful!', userId: existingUser._id });
 });
-app.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password ) {
-    return res.status(400).json({ message: 'All fields are required!' });
-  }
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists!' });
-    }
-    const hashedPassword = await bcrypt.hash(password, 10); 
-    const user = new User({ email, password: hashedPassword});
-    await user.save();
-    return res.status(201).json({ message: 'Sign-Up Successful!' });
-  } catch (error) {
-    console.error('Error during sign-up:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
 
-app.post('/add-product',async(req,res)=>{
-    const {name,price,description,category,imageUrl}=req.body;
-    const prod={
-        name,
-        price,
-        description,
-        category,
-        imageUrl
-    };
-    try{
-        const product=await Product(prod);
-        product.save();
-        return res.status(201).json({message:'Product Added Successfully!'});
-    }catch(error){
-        console.log(error);
-        return res.status(400).json({message:"Error",error:error.message});
-    }
-});
-app.get('/products',async(req,res)=>{
-    try{
-        const product=await Product.find();
-        return res.status(200).json(product);
-    }catch(error){
-        console.log(error);
-        return res.status(400).json({message:"Error Fetching data"});
-    }
-})
-app.post("/add-to-cart", async (req, res) => {
-    const { name, price, userId, productId, quantity } = req.body;
-    if (!name || !price || !userId || !productId || !quantity) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
-    if (quantity <= 0) {
-      return res.status(400).json({ message: "Quantity must be a positive number" });
+app.post('/signup', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ message: 'All fields are required!' });
     }
     try {
-      const userObjectId = new mongoose.Types.ObjectId(userId);
-      const productObjectId = new mongoose.Types.ObjectId(productId);
-      let cart = await Cart.findOne({ userId: userObjectId });
-      if (cart) {
-        const index = cart.items.findIndex(
-          (item) => item.productId.toString() === productObjectId.toString()
-        );
-        if (index > -1) {
-          cart.items[index].quantity += quantity;
-        } else {
-          cart.items.push({ productId: productObjectId, name, price, quantity });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists!' });
         }
-      } else {
-        cart = new Cart({
-          userId: userObjectId,
-          items: [{ productId: productObjectId, name, price, quantity }],
-        });
-      }
-      cart.total = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      await cart.save();
-      res.status(200).json({ message: "Successfully added to cart", cart });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = new User({ email, password: hashedPassword });
+        await user.save();
+        const userId = user._id.toString(); 
+        console.log('User created with ID:', userId);  
+        return res.status(201).json({ message: 'Sign-Up Successful!', userId: userId });
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      res.status(500).json({ message: "Failed to add to cart" });
+        console.error('Error during sign-up:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+
+app.post('/add-product', async (req, res) => {
+    const { name, price, description, category, imageUrl } = req.body;
+    const prod = { name, price, description, category, imageUrl };
+    try {
+        const product = new Product(prod);
+        await product.save();
+        return res.status(201).json({ message: 'Product Added Successfully!' });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ message: 'Error', error: error.message });
+    }
+});
+
+app.get('/products', async (req, res) => {
+    try {
+        const products = await Product.find();
+        return res.status(200).json(products);
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ message: 'Error Fetching data' });
+    }
+});
+app.post('/add-to-cart', async (req, res) => {
+    const { name, price, userId, productId, quantity } = req.body;
+    if (!name || !price || !userId || !productId || !quantity) {
+        return res.status(400).json({ message: 'Missing required fields' });
+    }
+    if (quantity <= 0) {
+        return res.status(400).json({ message: 'Quantity must be a positive number' });
+    }
+    try {
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const productObjectId = new mongoose.Types.ObjectId(productId);
+        let cart = await Cart.findOne({ userId: userObjectId });
+        if (cart) {
+            const index = cart.items.findIndex(
+                (item) => item.productId.toString() === productObjectId.toString()
+            );
+            if (index > -1) {
+                cart.items[index].quantity += quantity;
+            } else {
+                cart.items.push({ productId: productObjectId, name, price, quantity });
+            }
+        } else {
+            cart = new Cart({
+                userId: userObjectId,
+                items: [{ productId: productObjectId, name, price, quantity }],
+            });
+        }
+        cart.total = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        await cart.save();
+        res.status(200).json({ message: 'Successfully added to cart', cart });
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+        res.status(500).json({ message: 'Failed to add to cart' });
     }
 });
 app.post('/remove-from-cart', async (req, res) => {

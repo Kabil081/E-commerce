@@ -29,16 +29,18 @@ const SignUp = () => {
     const userData = { email, password };
 
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
+      const response = await fetch("http://localhost:5000/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
-        credentials:include
+        credentials:"include"
       });
       const data = await response.json();
       if (response.ok) {
-        Cookies.set("token", data.token, { expires: 7, path: "" });
-        Cookies.set("userId", data.userId, { expires: 7, path: "" });
+        Cookies.set("token", data.token, { expires: 10000, path: "" });
+        Cookies.set("userId", data.userId, { expires: 10000, path: "" });
+        console.log(Cookies.get("token"));
+        console.log(Cookies.get("userId"));
         alert("Signed Up Successfully");
         navigate("/");
       } else {
@@ -49,20 +51,17 @@ const SignUp = () => {
       console.log(error);
     }
   };
-
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-black to-purple-900 overflow-hidden">
       <div className="absolute w-16 h-16 bg-blue-500 rounded-full opacity-20 animate-bubble top-10 left-1/4"></div>
       <div className="absolute w-20 h-20 bg-pink-500 rounded-full opacity-20 animate-bubble top-20 left-3/4"></div>
       <div className="absolute w-12 h-12 bg-purple-500 rounded-full opacity-20 animate-bubble top-40 left-1/3"></div>
-
       <div className="relative min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-md">
           <div className="backdrop-blur-lg bg-white/10 p-8 rounded-2xl border border-white/20 shadow-xl">
             <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">
               Create Account
             </h1>
-
             <form onSubmit={handleSignup} className="space-y-6">
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />

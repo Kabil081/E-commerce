@@ -45,9 +45,7 @@ const Home = () => {
   ];
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-purple-900">
-      {/* Hero Section */}
       <div className="relative min-h-screen flex items-center">
-        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full 
                          mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
@@ -56,7 +54,6 @@ const Home = () => {
           <div className="absolute top-40 left-40 w-80 h-80 bg-blue-500 rounded-full 
                          mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
         </div>
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
             <h1 className="text-6xl md:text-7xl font-bold mb-8">

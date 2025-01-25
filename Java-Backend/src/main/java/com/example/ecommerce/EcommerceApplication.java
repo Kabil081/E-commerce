@@ -1,5 +1,4 @@
 package com.example.ecommerce;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +27,6 @@ import io.jsonwebtoken.*;
 import javax.crypto.SecretKey;
 import io.jsonwebtoken.security.Keys;
 import java.util.*;
-
 @SpringBootApplication
 public class EcommerceApplication {
     public static void main(String[] args) {
@@ -54,13 +52,11 @@ public class EcommerceApplication {
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
-
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
@@ -74,46 +70,36 @@ class SecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .authorizeHttpRequests()
-            .requestMatchers("/api/signup", "/api/login").permitAll()
+            .requestMatchers("/signup", "/login").permitAll()
             .anyRequest().authenticated();
-            
         return http.build();
     }
 }
-
 @Document(collection = "users")
 class User {
     @Id
     private String id;
     private String email;
     private String password;
-    
-    // Getters and Setters
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
-
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
-
     public String getPassword() {
         return password;
     }
-
     public void setPassword(String password) {
         this.password = password;
     }
 }
-
 @Document(collection = "products")
 class Product {
     @Id
@@ -123,57 +109,43 @@ class Product {
     private double price;
     private String category;
     private String imageUrl;
-
-    // Getters and Setters
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
-
     public String getName() {
         return name;
     }
-
-    public void setName(String name) {
+    public void setName(String name){
         this.name = name;
     }
-
-    public String getDescription() {
+    public String getDescription(){
         return description;
     }
-
-    public void setDescription(String description) {
+    public void setDescription(String description){
         this.description = description;
     }
-
     public double getPrice() {
         return price;
     }
-
     public void setPrice(double price) {
         this.price = price;
     }
-
     public String getCategory() {
         return category;
     }
-
     public void setCategory(String category) {
         this.category = category;
     }
-
     public String getImageUrl() {
         return imageUrl;
     }
-
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
 }
-
 @Document(collection = "carts")
 class Cart {
     @Id
@@ -182,47 +154,35 @@ class Cart {
     private User user;
     private List<CartItem> items = new ArrayList<>();
     private double total;
-
-    // Getters and Setters
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
-
     public User getUser() {
         return user;
     }
-
     public void setUser(User user) {
         this.user = user;
     }
-
     public List<CartItem> getItems() {
         return items;
     }
-
     public void setItems(List<CartItem> items) {
         this.items = items;
     }
-
     public double getTotal() {
         return total;
     }
-
     public void setTotal(double total) {
         this.total = total;
     }
 }
-
 class CartItem {
     @DBRef
     private Product product;
     private int quantity;
-
-    // Getters and Setters
     public Product getProduct() {
         return product;
     }
@@ -253,25 +213,19 @@ interface ProductRepository extends MongoRepository<Product, String> {
 interface CartRepository extends MongoRepository<Cart, String> {
     Optional<Cart> findByUserId(String userId);
 }
-
 @RestController
 @RequestMapping("/api")
 class ApiController {
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private ProductRepository productRepository;
-
     @Autowired
     private CartRepository cartRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     @Autowired
     private SecretKey jwtSecretKey;
-
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@RequestBody Map<String, String> request) {
         String email = request.get("email");
@@ -300,32 +254,26 @@ class ApiController {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Password!");
         }
-
         String token = Jwts.builder()
                 .setSubject(user.getId())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) 
                 .signWith(jwtSecretKey)
                 .compact();
-
         Map<String, String> response = new HashMap<>();
         response.put("token", token);
         response.put("userId", user.getId());
-
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/add-product")
     public ResponseEntity<?> addProduct(@RequestBody Product product) {
         productRepository.save(product);
         return ResponseEntity.status(HttpStatus.CREATED).body("Product Added Successfully!");
     }
-
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getProducts() {
         return ResponseEntity.ok(productRepository.findAll());
     }
-
     @PostMapping("/add-to-cart")
     public ResponseEntity<?> addToCart(@RequestBody Map<String, Object> request) {
         String userId = (String) request.get("userId");
@@ -338,14 +286,11 @@ class ApiController {
                 .orElseThrow(() -> new RuntimeException("User Not Found")));
             return newCart;
         });
-
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new RuntimeException("Product Not Found"));
-
         Optional<CartItem> existingItem = cart.getItems().stream()
             .filter(item -> item.getProduct().getId().equals(productId))
             .findFirst();
-
         if (existingItem.isPresent()) {
             existingItem.get().setQuantity(existingItem.get().getQuantity() + quantity);
         } else {
@@ -354,20 +299,16 @@ class ApiController {
             newItem.setQuantity(quantity);
             cart.getItems().add(newItem);
         }
-
         cart.setTotal(cart.getItems().stream()
             .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
             .sum());
-
         cartRepository.save(cart);
         return ResponseEntity.ok(cart);
     }
-
     @PostMapping("/remove-from-cart")
     public ResponseEntity<?> removeFromCart(@RequestBody Map<String, String> request) {
         String userId = request.get("userId");
         String productId = request.get("productId");
-
         Cart cart = cartRepository.findByUserId(userId)
             .orElseThrow(() -> new RuntimeException("Cart Not Found"));
 
@@ -375,7 +316,6 @@ class ApiController {
         cart.setTotal(cart.getItems().stream()
             .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
             .sum());
-
         cartRepository.save(cart);
         return ResponseEntity.ok("Product removed from cart");
     }

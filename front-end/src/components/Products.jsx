@@ -119,7 +119,6 @@ const Products = () => {
     <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black p-8 pt-16">
       <div className="container mx-auto">
         <div className="flex items-center mb-8">
-          
           <div className="flex items-center space-x-4">
             <input 
               type="text" 

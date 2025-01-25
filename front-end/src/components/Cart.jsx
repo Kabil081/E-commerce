@@ -65,13 +65,11 @@ const Cart = () => {
           total 
         })
       });
-
       const session = await response.json();
     } catch (error) {
       console.error("Payment initiation error:", error);
     }
   };
-
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-black via-purple-900 to-black flex items-center justify-center">
       <div className="animate-pulse text-center">
@@ -202,5 +200,4 @@ const Cart = () => {
     </div>
   );
 };
-
 export default Cart;

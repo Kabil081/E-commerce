@@ -2,27 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Cookies from 'js-cookie';
 const Navbar = () => {
-  const [isLogged, setIsLogged] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const isLogged = !!Cookies.get('token');
   useEffect(() => {
-    const token = Cookies.get('token');
-    setIsLogged(!!token);
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location]);
-
   const handleLogout = () => {
     Cookies.remove('token');
-    setIsLogged(false);
+    Cookies.remove('userId');
+    window.location.reload();
   };
-
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${
       isScrolled 
@@ -58,7 +53,6 @@ const Navbar = () => {
               </svg>
             </div>
           </div>
-
           <div className="flex items-center space-x-8">
             <NavLink to="/products">
               <span className="flex items-center space-x-1">
@@ -69,7 +63,6 @@ const Navbar = () => {
                 <span>Products</span>
               </span>
             </NavLink>
-
             {!isLogged ? (
               <>
                 <NavLink to="/signup">Sign Up</NavLink>
@@ -77,7 +70,6 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <NavLink to="/add-product">Add Product</NavLink>
                 <NavLink to="/cart">Cart</NavLink>
                 <button 
                   onClick={handleLogout}
@@ -89,7 +81,6 @@ const Navbar = () => {
                 </button>
               </>
             )}
-            
             <NavLink to="/about">About</NavLink>
           </div>
         </div>
@@ -97,7 +88,6 @@ const Navbar = () => {
     </nav>
   );
 };
-
 const NavLink = ({ to, children }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -116,5 +106,4 @@ const NavLink = ({ to, children }) => {
     </Link>
   );
 };
-
 export default Navbar;

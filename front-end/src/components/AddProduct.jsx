@@ -12,13 +12,9 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-
-  // Handle input changes
   const handleInputChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
-
-  // Handle drag events for image upload
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -28,28 +24,21 @@ const AddProduct = () => {
       setDragActive(false);
     }
   };
-
-  // Handle image drop event
   const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
     const file = e.dataTransfer.files[0];
     if (file) {
       await handleFileUpload(file);
     }
   };
-
-  // Upload image to Cloudinary
   const handleFileUpload = async (file) => {
     if (!file) return;
-
     setLoading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_PRESET); // Use your Cloudinary preset
-
+    formData.append('upload_preset', import.meta.env.VITE_PRESET);
     try {
       const res = await axios.post(
         `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUD_NAME}/image/upload`,
@@ -64,20 +53,14 @@ const AddProduct = () => {
       setLoading(false);
     }
   };
-
-  // Handle file selection from input
   const fileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       await handleFileUpload(file);
     }
   };
-
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validation
     if (!product.imageUrl) {
       alert('Please upload an image');
       return;
@@ -117,15 +100,12 @@ const AddProduct = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 py-20">
       <div className="max-w-4xl mx-auto px-4 pt-10">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-white/20">
           <h2 className="text-3xl font-bold text-white mb-8 text-center">Add New Product</h2>
-
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Image Upload Section */}
             <div className="mb-8">
               <div
                 onDragEnter={handleDrag}
@@ -141,7 +121,6 @@ const AddProduct = () => {
                   accept="image/*"
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
-                
                 {imagePreview ? (
                   <div className="relative">
                     <img
@@ -165,8 +144,6 @@ const AddProduct = () => {
                 )}
               </div>
             </div>
-
-            {/* Product Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-white/80 mb-2 text-sm">Product Name</label>
@@ -179,7 +156,6 @@ const AddProduct = () => {
                   className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300"
                 />
               </div>
-
               <div>
                 <label className="block text-white/80 mb-2 text-sm">Price</label>
                 <input
@@ -191,7 +167,6 @@ const AddProduct = () => {
                   className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-300"
                 />
               </div>
-
               <div className="md:col-span-2">
                 <label className="block text-white/80 mb-2 text-sm">Category</label>
                 <select
@@ -207,7 +182,6 @@ const AddProduct = () => {
                   <option value="food">Food</option>
                 </select>
               </div>
-
               <div className="md:col-span-2">
                 <label className="block text-white/80 mb-2 text-sm">Description</label>
                 <textarea
@@ -220,7 +194,6 @@ const AddProduct = () => {
                 />
               </div>
             </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -235,5 +208,4 @@ const AddProduct = () => {
     </div>
   );
 };
-
 export default AddProduct;
